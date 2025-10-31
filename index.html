@@ -1,0 +1,858 @@
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>for my  love</title>
+    <audio id="backgroundMusic" loop volume="0.3">
+        <source src="大笨钟.mp3" type="audio/mpeg">
+   </audio>
+    <style>
+        /* 基础样式 - 适配所有屏幕 */
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: white;
+            background-image: url('背景.png');
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            background-attachment: fixed;
+            margin: 0;
+            font-family: "Microsoft Yahei", sans-serif;
+            overflow: hidden;
+            position: relative;
+            padding: 0 10px;
+        }
+        /* 大爱心容器 - 响应式尺寸 */
+        .big-heart {
+            width: 70vw; /* 使用视口宽度百分比 */
+            max-width: 350px;
+            height: 60vw;
+            max-height: 300px;
+            position: relative;
+            z-index: 5;
+            margin-bottom: 20px;
+            animation: pulse 3s infinite ease-in-out;
+            background: transparent;
+        }
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.05);
+            }
+        }
+        /* 爱心容器：调整位置使左上角爱心显示完整 */
+        .heart-container {
+            position: absolute;
+            left: 200px; /* 向右移动，避免左上角爱心被截断 */
+            top: 200px; /* 向下移动，避免左上角爱心被截断 */
+            width: 120vw;
+            height: 120vh;
+            z-index: 5; /* 与大爱心相同，不覆盖气泡 */
+        }
+        /* 单个小爱心样式 */
+        .heart-particle {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            background: #ff6b8b;
+            opacity: 0;
+            animation: heartFade 4s infinite linear;
+            transform-origin: center;
+        }
+        
+        /* 大爱心内部的小爱心 */
+        .big-heart-particle {
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            background: #ff6b8b;
+            opacity: 0.8;
+            transform-origin: center;
+            animation: pulseSmall 3s infinite ease-in-out;
+            transition: all 4s cubic-bezier(0.25, 1, 0.25, 1); /* 使用更平滑的缓动函数并延长时间 */
+        }
+        
+        /* 小爱心的脉冲动画 */
+        @keyframes pulseSmall {
+            0%, 100% {
+                transform: scale(1) rotate(var(--rotate, 0deg));
+            }
+            50% {
+                transform: scale(1.1) rotate(var(--rotate, 0deg));
+            }
+        }
+        
+        /* 恢复经典爱心形状 - 使用伪元素 */
+        .heart-particle::before,
+        .heart-particle::after,
+        .big-heart-particle::before,
+        .big-heart-particle::after {
+            content: "";
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: inherit;
+            border-radius: 50%;
+        }
+        
+        .heart-particle::before,
+        .big-heart-particle::before {
+            top: -50%;
+            left: 0;
+        }
+        
+        .heart-particle::after,
+        .big-heart-particle::after {
+            top: 0;
+            left: 50%;
+        }
+        
+        @keyframes heartFade {
+            0% {
+                opacity: 0;
+                transform: scale(0.5) translate(0, 0) rotate(0deg);
+            }
+            20% {
+                opacity: 1;
+            }
+            80% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0;
+                transform: scale(1.5) translate(var(--x), var(--y)) rotate(360deg);
+            }
+        }
+        /* 随机气泡样式 */
+        .bubble {
+            position: absolute;
+            background: linear-gradient(180deg, rgba(255, 174, 185, 0.6), rgba(197, 194, 255, 0.6));
+            color: #fc5555;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 14px;
+            max-width: 200px;
+            word-wrap: break-word;
+            box-shadow: 0 2px 8px rgba(255, 133, 162, 0.2);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+            z-index: 10; /* 提高z-index，确保显示在爱心之上 */
+        }
+        /* 消息容器 - 响应式设计 */
+        #messageContainer {
+            position: fixed;
+            bottom: 90px;
+            width: 100%;
+            max-width: 500px;
+            height: calc(100% - 200px);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end; /* 从底部开始排列 */
+            padding: 0 15px;
+            box-sizing: border-box;
+            z-index: 20;
+        }
+        /* 消息气泡样式 */
+        .message {
+            background: linear-gradient(180deg, rgba(255, 133, 162, 0.6), rgba(174, 183, 255, 0.6));
+            color: white;
+            padding: 10px 15px;
+            border-radius: 20px;
+            font-size: 14px;
+            max-width: 80%;
+            word-wrap: break-word;
+            margin: 5px 0;
+            align-self: center;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s ease;
+        }
+        .message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        /* 引入Google Fonts艺术字体 - 用于"我喜欢你"标题 */
+        @import url('https://fonts.googleapis.com/css2?family=Ma+Shan+Zheng&family=ZCOOL+QingKe+HuangYou&display=swap');
+        
+        /* 主标题样式 - 向上调整位置 */
+        .title {
+            position: fixed;
+            top: 20px;
+            font-size: 36px;
+            color: #ff568e;
+            margin: 0;
+            z-index: 10;
+            text-align: center;
+            font-family: 'Ma Shan Zheng', 'ZCOOL QingKe HuangYou', 'Microsoft Yahei', cursive, sans-serif;
+            text-shadow: 2px 2px 4px rgba(255, 107, 139, 0.4), 0 0 20px rgba(255, 107, 139, 0.3);
+            letter-spacing: 3px;
+            transform: perspective(500px) rotateX(5deg);
+            animation: titleFloat 4s ease-in-out infinite;
+        }
+        
+        /* 标题浮动动画效果 */
+        @keyframes titleFloat {
+            0%, 100% {
+                transform: perspective(500px) rotateX(5deg) translateY(0);
+                text-shadow: 2px 2px 4px rgba(255, 107, 139, 0.4), 0 0 20px rgba(255, 107, 139, 0.3);
+            }
+            50% {
+                transform: perspective(500px) rotateX(3deg) translateY(-5px);
+                text-shadow: 3px 3px 6px rgba(255, 107, 139, 0.5), 0 0 30px rgba(255, 107, 139, 0.4);
+            }
+        }
+        /* 按钮样式 */
+        .action-btn {
+            position: fixed;
+            bottom: 20px;
+            padding: 12px 24px;
+            background-color: #c2c8fc; /* 更柔和的粉色 */
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-size: 16px;
+            cursor: pointer;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(255, 133, 162, 0.3);
+            transition: all 0.3s ease;
+            min-width: 150px;
+        }
+        .action-btn:active {
+            background-color: #fdaabc;
+            transform: scale(0.95);
+        }
+        
+        /* 响应式媒体查询 - 针对手机屏幕 */
+        @media screen and (max-width: 480px) {
+            .title {
+                font-size: 30px;
+                top: 15px;
+                letter-spacing: 2px;
+            }
+            
+            .heart-container {
+                left: 30px;
+                top: 30px;
+            }
+            
+            .big-heart {
+                width: 80vw;
+                height: 70vw;
+                margin-bottom: 15px;
+            }
+            
+            .message {
+                font-size: 13px;
+                padding: 8px 12px;
+                max-width: 85%;
+            }
+            
+            .bubble {
+                font-size: 12px;
+                padding: 6px 10px;
+                max-width: 40%;
+                box-sizing: border-box;
+                margin: 5px;
+            }
+            
+            .action-btn {
+                font-size: 15px;
+                padding: 10px 20px;
+                bottom: 15px;
+                min-width: 130px;
+            }
+            
+            #messageContainer {
+                bottom: 80px;
+                height: calc(100% - 180px);
+                padding: 0 10px;
+            }
+            
+            .heart-particle {
+                width: 10px;
+                height: 10px;
+            }
+            
+            .big-heart-particle {
+                width: 7px;
+                height: 7px;
+            }
+        }
+        
+        /* 针对小屏幕手机的额外优化 */
+        @media screen and (max-width: 360px) {
+            .title {
+                font-size: 26px;
+                top: 10px;
+                letter-spacing: 1px;
+            }
+            
+            .heart-container {
+                left: 20px;
+                top: 20px;
+            }
+            
+            .action-btn {
+                font-size: 14px;
+                padding: 8px 16px;
+                min-width: 120px;
+            }
+            
+            .message {
+                font-size: 12px;
+            }
+            
+            .bubble {
+                font-size: 11px;
+                max-width: 120px;
+            }
+        }
+        /* 随机气泡上升动画 */
+        @keyframes bubbleRise {
+                0% {
+                    transform: translateY(0) scale(1);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translateY(-500px) scale(1.1);
+                    opacity: 0;
+                }
+            }
+            
+            @keyframes bubbleFloat {
+                0% {
+                    transform: translateY(0) scale(1);
+                    opacity: 1;
+                }
+                50% {
+                    transform: translateY(-200px) scale(1.05);
+                    opacity: 1;
+                }
+                100% {
+                    transform: translateY(-400px) scale(1.1);
+                    opacity: 0;
+                }
+            }
+    </style>
+</head>
+<body>
+    <h1 class="title">TO MY IU</h1>
+    <div class="big-heart"></div>
+    <div class="heart-container" id="heartContainer"></div>
+    <div id="bubbleContainer"></div>
+    <div id="messageContainer"></div>
+    <button class="action-btn" id="messageBtn">看看他的心意</button>
+
+    <script>
+        // 想对她说的话（按顺序一句一句显示）
+        const myMessages = [
+            "我脑子里真的很乱",
+            "我不知道该怎么样",
+            "不知道应该怎么做",
+            "我也觉得我一直在指责她",
+            "可能是我心里不舒服输出给她了",
+            "我真的很后悔管不住自己的心情",
+            "这一年我跟她不在一起的时候",
+            "基本没有共同的事情",
+            "之前还会玩玩游戏",
+            "现在她刚入职工作也很辛苦",
+            "我也在忙着备考",
+            "每当有争吵有话说不开的时候",
+            "两个人犟着，越来越收不了场",
+            "她其实一直都很好很坚强",
+            "我真的很爱她",
+            "可我有时候也很烦恼",
+            "可是我自己态度又不好",
+            "她只是一个不爱说话的小姑娘",
+            "所有的事都藏在心里",
+            "我也不知道她有什么理由向我低头",
+            "我也不知道为什么",
+            "我越来越不懂自己",
+            "每个人表达爱的方式本就是不一样的",
+            "我总爱问她你是不是不够爱我",
+            "我心里没有答案",
+            "她其实给我答案了，却总被我忽略",
+            "和她相处这么久",
+            "好像没有了解她",
+            "可我们已经在一起这么久了",
+            "彼此表达爱的方式，还没有摸清楚吗",
+            "也许之前明白吧",
+            "也许我越来越让她弄不懂",
+            "也慢慢变得两个人一有矛盾就不愿意说话",
+            "我常常在思考，我应该怎么去做",
+            "明明知道有时候有些话说出来对大家都不好",
+            "可是我忍不住",
+            "却好像也没有问她心里好不好受",
+            "大概是我总是会主动和她说我心里难过",
+            "却忘了她把自己的心情埋在心底",
+            "也许我真的很不合格",
+            "吵完架我应该关心她的",
+            "她嘴上什么都不说",
+            "只会骂我大傻呗",
+            "她说不出深情的话",
+            "可是每一句稀疏平常的话",
+            "又何尝不是她给我最美的情话 ",
+            "她平时刷抖音比较多",
+            "有时候两个人不说话都生气",
+            "她会给我发抖音",
+            "应该是在给我台阶下",
+            "可是问题不解决",
+            "我怎么要钻牛角尖",
+            "为什么我不明白",
+            "她在身边，就没有解决不了的问题",
+            "我们俩",
+            "见一面，所有的事情都会说清楚",
+            "见一面，就什么事都没有了",
+            "可她现在见不了我",
+            "我也每天都很赶",
+            "我们俩没有面对面的时候两个人都很拧",
+            "很揪心",
+            "我又开始犯老毛病了",
+            "我老是会急",
+            "就和她说你为什么不和我讲",
+            "她心里也想了很多吧",
+            "她总是问我一遍又一遍喜欢她什么",
+            "其实我心里从来都答不上来",
+            "因为她的所有我都喜欢",
+            "她有时候会粗心，但这样真的很可爱",
+            "有时候会蹦蹦跳跳看着我",
+            "她总是一小会都离不开我的拥抱",
+            "这些话我不敢和她讲",
+            "我常常想起来",
+            "她之前上班的时候揣零食回来给我吃",
+            "她有什么都给我留着",
+            "但是自己又会忍不住吃一点",
+            "我们俩在手机上都好像变了一个人",
+            "如果可以",
+            "我希望自己多理解理解她",
+            "她对我的好",
+            "我想我应该记下来",
+            "我不能在有些事情发生的时候就",
+            "忘记掉了",
+            "她现在和我说了分手",
+            "不再愿意和我讲话了",
+            "她好像没有原谅我的打算",
+            "她说她很累，觉得一个人比较好",
+            "我觉得她说的很对",
+            "我很想她留下来",
+            "可是她没有再把我留在身边的理由",
+            "我总是在想",
+            "是不是一开始在和她在一起上学就会好了",
+            "那或许又会遇不到她吧",
+            "我爱你",
+            "一直一直",
+            "永远永远"
+        ];
+
+        // 情话列表（保持原有冒出效果）
+        const loveQuotes = [
+            "在无数个平行宇宙里，我最庆幸的是与你相遇",
+            "你是我心中永不凋零的花朵，四季皆春",
+            "每一次想到你，都是月光洒在心湖上的温柔涟漪",
+            "你是我笔下最温柔的诗，是我梦里最甜的梦",
+            "与你相伴的时光，是我生命中最璀璨的星辰",
+            "你是我灵魂深处的港湾，无论风雨，都能安然",
+            "你的笑容是我心中永不熄灭的篝火，温暖而明亮",
+            "我想把所有的温柔都给你，连同这世间所有的美好",
+            "你是我生命中的奇迹，是我存在的全部意义",
+            "在有你的地方，连空气都散发着甜蜜的香气",
+            "你是我的晨曦，是我日暮时分的归宿",
+            "你是我心中最柔软的角落，是我灵魂的栖息地",
+            "每一次凝望你，都像是第一次看见世间最美好的奇迹",
+            "你是我生命中的光，照亮了我所有黑暗的角落",
+            "我想和你一起走过每一个春夏秋冬，看岁月悠长",
+            "你是我心中最温柔的风，吹散了我所有的忧愁",
+            "每一次想起你，都是心中最温柔的悸动",
+            "你是我生命中最美的意外，是我最珍贵的宝藏",
+            "我想把所有的爱都给你，连同这世间所有的温柔",
+            "你是我眼底的星河，是我余生的潮汐",
+            "你的名字，是我写过最短的情诗，却是最绵长的欢喜",
+            "见你时，风也含情，云也温柔，世间万物都成了爱的注脚",
+            "我愿做你身边的影子，在每一个晨昏里，与你形影不离",
+            "你是我生命的平仄，在诗行里，谱写出最动听的韵律",
+            "想把世间所有的浪漫，揉碎了，都酿成关于你的甜梦",
+            "你是我跨越山海的执念，是我停泊心岸的归帆",
+            "你的眼眸里，藏着我整个宇宙的星光，璀璨且滚烫",
+            "我对你的爱，是四季流转里，永不褪色的花期",
+            "和你在一起的每一刻，都像是把光阴酿成了蜜糖",
+            "你是我灵魂的共鸣，是我生命里最动听的和弦",
+            "你是我寒夜里的暖光，是我迷途时的航向",
+            "与你相逢，便胜却人间无数烟火，温柔了岁月漫长",
+            "我想把朝朝暮暮都给你，让爱意在时光里慢慢沉淀",
+            "你的温柔，是穿堂而过的风，抚平我所有的躁动不安",
+            "你是我藏在心底的浪漫，是我此生不渝的信仰",
+            "每一次与你相拥，都像是拥有了整个世界的安稳",
+            "我对你的思念，是跨越晨昏的潮汐，从未停歇",
+            "你是我生命中最温暖的遇见，是我余生所有的期盼",
+            "想和你一起看遍山河远阔，把日子过成诗与远方",
+            "你的存在，让平凡的岁月都闪着细碎而温柔的光",
+            "你是春涧的溪流，淌过我心底的荒芜，漾起层层欢喜",
+            "我对你的爱，是漫山遍野的繁花，岁岁年年，永不落幕",
+            "你的气息，是清晨带着露珠的青草香，清新又治愈",
+            "你是夜空的萤火，点亮我前行的路，温柔又明亮",
+            "与你相伴，连时光都变得柔软，每一秒都值得珍藏",
+            "你是我掌心的月光，轻轻捧着，生怕惊扰了这份美好",
+            "我想把星河揉碎，撒进你的眼眸，让你满眼都是星光",
+            "你的温柔，是深秋的暖阳，驱散我所有的寒凉与迷茫",
+            "你是我此生最美的情书，字字句句，都是深情",
+            "我对你的思念，是林间的清风，无处不在，悄然入梦",
+            "你是我生命里的平仄，谱写出最动听的恋曲",
+            "想和你一起枕着星光入眠，让爱意在梦里延续",
+            "你的笑容，是寒冬里的红梅，惊艳了岁月，温暖了时光",
+            "我愿做你一生的摆渡人，陪你穿越风雨，抵达幸福彼岸",
+            "你是我藏在时光里的温柔，是我穷尽一生也想守护的光",
+            "与你相逢，便如星辰撞入眼眸，从此山河皆是伏笔",
+            "你的声音，是世间最动听的旋律，萦绕耳畔，念念不忘",
+            "我对你的爱，是深海的珊瑚，在岁月里静静生长，愈发坚韧",
+            "你是我路过人间的惊喜，是我此生不渝的痴迷",
+            "想和你一起看日出东方，等日落西山，把朝暮都写成浪漫",
+            "你的身影，是我目光的归宿，无论何时，总能一眼寻见",
+            "我对你的牵挂，是缠绕心头的藤蔓，越久越深沉",
+            "你是夏夜晚风里的蝉鸣，是藏在枝叶间的温柔絮语",
+            "与你相守，日子便有了温度，平凡也变得滚烫",
+            "你是我笔尖的星光，在纸页间流转，写下满心欢喜",
+        ];
+
+        let messageIndex = 0;
+        let isManualMode = false;
+        const bubbleContainer = document.getElementById('bubbleContainer');
+        const messageContainer = document.getElementById('messageContainer');
+        const messageBtn = document.getElementById('messageBtn');
+        let randomBubbleInterval;
+
+        // 生成大爱心内部的小爱心粒子
+        function createBigHeartParticles() {
+            const bigHeart = document.querySelector('.big-heart');
+            const width = bigHeart.offsetWidth;
+            const height = bigHeart.offsetHeight;
+            const centerX = width / 2;
+            const centerY = height / 2;
+            
+            // 清除现有粒子
+            bigHeart.innerHTML = '';
+            
+            // 使用更有序的方式生成爱心粒子，减少密度
+            const particles = [];
+            const scaleX = width * 0.45; // 水平缩放因子
+            const scaleY = height * 0.4; // 垂直缩放因子
+            
+            // 使用参数方程生成有序的边缘粒子分布
+            for (let t = 0; t <= 2 * Math.PI; t += 0.05) {
+                // 主要爱心曲线参数方程
+                const x1 = centerX + scaleX * Math.pow(Math.sin(t), 3);
+                const y1 = centerY - scaleY * (13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t)) / 13;
+                
+                if (x1 > 10 && x1 < width - 10 && y1 > 10 && y1 < height - 10) {
+                    particles.push({x: x1, y: y1, targetX: x1, targetY: y1, isEdge: true});
+                }
+            }
+            
+            // 在内部添加粒子，但设置它们的目标位置是边缘位置
+            for (let i = 0; i < 200; i++) {
+                // 先计算一个边缘上的目标点
+                const t = Math.random() * Math.PI * 2;
+                const targetX = centerX + scaleX * Math.pow(Math.sin(t), 3);
+                const targetY = centerY - scaleY * (13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t)) / 13;
+                
+                // 然后计算一个靠近中心的起始点（距离目标点的30-70%处）
+                const progress = Math.random() * 0.7 + 0.3; // 0.3-1.0的范围，确保初始位置在内部
+                const startX = centerX + (targetX - centerX) * (1 - progress);
+                const startY = centerY + (targetY - centerY) * (1 - progress);
+                
+                if (startX > 20 && startX < width - 20 && startY > 20 && startY < height - 20) {
+                    particles.push({
+                        x: startX, 
+                        y: startY, 
+                        targetX: targetX,
+                        targetY: targetY,
+                        isEdge: false,
+                        delay: Math.random() * 2000 // 随机延迟，使动画错开
+                    });
+                }
+            }
+            
+            // 添加粒子到容器并实现收回和发散的往复效果
+            particles.forEach(point => {
+                const heart = document.createElement('div');
+                heart.className = 'big-heart-particle';
+                
+                // 设置初始位置
+                heart.style.left = `${point.x}px`;
+                heart.style.top = `${point.y}px`;
+                
+                // 边缘粒子稍大，内部粒子稍小
+                const size = point.isEdge ? 6 + Math.random() * 4 : 4 + Math.random() * 3;
+                heart.style.width = `${size}px`;
+                heart.style.height = `${size}px`;
+                
+                // 颜色变化
+                const hue = 345 + Math.random() * 30;
+                const saturation = 85 + Math.random() * 15;
+                const lightness = 70 + Math.random() * 15;
+                heart.style.background = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                
+                // 随机旋转
+                heart.style.transform = `rotate(${Math.random() * 360}deg)`;
+                
+                // 设置透明度
+                heart.style.opacity = 0.8 + Math.random() * 0.2;
+                
+                bigHeart.appendChild(heart);
+                
+                // 存储粒子的中心位置和边缘位置
+                heart.centerX = centerX;
+                heart.centerY = centerY;
+                heart.targetX = point.targetX || point.x;
+                heart.targetY = point.targetY || point.y;
+                heart.isAtEdge = point.isEdge;
+                heart.isAnimating = false;
+                
+                // 粒子动画函数 - 从当前状态无缝过渡到下一个状态
+                function animateParticle() {
+                    // 安全检查：确保heart元素仍然存在
+                    if (!heart || !heart.parentNode) {
+                        return;
+                    }
+                    
+                    // 为每个粒子设置不同的动画参数
+                    const duration = 8000 + Math.random() * 2000; // 6-8秒的随机动画时长，更长的动画时间
+                    const easing = 'cubic-bezier(0.25, 0.46, 0.45, 0.94)'; // 平滑缓动函数
+                    
+                    // 记录当前位置作为动画起始点
+                    // 这确保第二次动画会从第一次动画结束的实际位置开始
+                    const currentLeft = parseFloat(heart.style.left) || 0;
+                    const currentTop = parseFloat(heart.style.top) || 0;
+                    
+                    // 确定目标位置：基于当前位置到中心和边缘的距离决定方向
+                    // 如果当前更靠近中心，则向边缘扩散；如果更靠近边缘，则向中心收缩
+                    const distanceToCenter = Math.sqrt(
+                        Math.pow(currentLeft - heart.centerX, 2) + 
+                        Math.pow(currentTop - heart.centerY, 2)
+                    );
+                    const distanceToEdge = Math.sqrt(
+                        Math.pow(currentLeft - heart.targetX, 2) + 
+                        Math.pow(currentTop - heart.targetY, 2)
+                    );
+                    
+                    // 目标位置：哪边更远就往哪边去，实现往返运动
+                    const targetX = distanceToCenter < distanceToEdge ? heart.targetX : heart.centerX;
+                    const targetY = distanceToCenter < distanceToEdge ? heart.targetY : heart.centerY;
+                    
+                    // 设置过渡属性
+                    heart.style.transition = 'all ' + duration + 'ms ' + easing;
+                    
+                    // 应用动画到目标位置 - 从当前实际位置平滑过渡到下一个目标位置
+                    heart.style.left = targetX + 'px';
+                    heart.style.top = targetY + 'px';
+                    
+                    // 动画完成后，立即启动下一次动画
+                    // 此时heart.style.left和heart.style.top已经是动画结束的位置
+                    // 下次动画会从这个实际位置开始计算下一个目标
+                    setTimeout(() => {
+                        if (heart) { // 再次检查元素是否存在
+                            animateParticle();
+                        }
+                    }, duration);
+                }
+                
+                // 为所有粒子启动动画，使用更分散的初始延迟，避免同时开始
+                  setTimeout(animateParticle, point.delay || Math.random() * 2000);
+            });
+        }
+        
+        // 生成漂浮的爱心粒子
+        function createHeartParticles() {
+            const container = document.getElementById('heartContainer');
+            setInterval(() => {
+                const heart = document.createElement('div');
+                heart.className = 'heart-particle';
+                const x = Math.random() * 600 - 300;
+                const y = Math.random() * 600 - 300;
+                heart.style.setProperty('--x', `${x}px`);
+                heart.style.setProperty('--y', `${y}px`);
+                
+                // 随机大小，使效果更自然
+                const size = 8 + Math.random() * 12;
+                heart.style.width = `${size}px`;
+                heart.style.height = `${size}px`;
+                
+                // 随机颜色变化
+                const hue = 345 + Math.random() * 30;
+                const saturation = 85 + Math.random() * 15;
+                const lightness = 70 + Math.random() * 10;
+                heart.style.background = `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+                
+                container.appendChild(heart);
+                setTimeout(() => {
+                    heart.remove();
+                }, 4000);
+            }, 100);
+        }
+
+        // 初始随机生成情话气泡（保持原有冒出效果）
+        function startRandomBubbles() {
+            randomBubbleInterval = setInterval(() => {
+                if (isManualMode) {
+                    clearInterval(randomBubbleInterval);
+                    return;
+                }
+                createRandomBubble();
+            }, 2000);
+        }
+
+        // 创建随机气泡（保持原有上升效果）
+        function createRandomBubble() {
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.textContent = loveQuotes[Math.floor(Math.random() * loveQuotes.length)];
+            bubbleContainer.appendChild(bubble);
+            bubble.style.left = `${Math.random() * 70 + 15}%`;
+            bubble.style.bottom = `${Math.random() * 20 + 5}%`;
+            const duration = 6 + Math.random() * 4;
+            bubble.style.animation = `bubbleRise ${duration}s linear forwards`;
+            setTimeout(() => {
+                bubble.style.opacity = "1";
+                bubble.style.transform = "translateY(0)";
+            }, 100);
+            setTimeout(() => {
+                // 即使在手动模式下也移除气泡，避免堆积
+                if (bubble.parentNode) {
+                    bubble.remove();
+                }
+            }, duration * 1000);
+        }
+
+        // 创建消息（最新在底部，超出范围的自动隐藏）
+        function createMessage(text) {
+            const message = document.createElement('div');
+            message.className = 'message';
+            message.textContent = text;
+            messageContainer.appendChild(message);
+            
+            // 触发显示动画
+            setTimeout(() => {
+                message.classList.add('show');
+            }, 100);
+            
+            // 检查并移除超出容器的消息
+            removeOverflowMessages();
+        }
+
+        // 移除超出容器范围的消息
+        function removeOverflowMessages() {
+            const messages = messageContainer.querySelectorAll('.message');
+            const containerHeight = messageContainer.clientHeight;
+            
+            // 计算所有消息总高度
+            let totalHeight = 0;
+            let messagesToRemove = [];
+            
+            // 从底部开始计算，只保留能容纳的消息
+            for (let i = messages.length - 1; i >= 0; i--) {
+                totalHeight += messages[i].offsetHeight + 10; // 加上margin
+                if (totalHeight > containerHeight) {
+                    messagesToRemove.push(messages[i]);
+                }
+            }
+            
+            // 移除超出范围的消息
+            messagesToRemove.forEach(msg => msg.remove());
+        }
+
+        // 按钮点击事件
+        messageBtn.addEventListener('click', () => {
+            if (!isManualMode) {
+                isManualMode = true;
+                // 不再清空气泡，而是让它们保留并继续在两侧显示
+                messageBtn.textContent = '继续说...';
+                clearInterval(randomBubbleInterval);
+                
+                // 开始在两侧显示气泡
+                setTimeout(() => {
+                    setInterval(() => {
+                        createSideBubble();
+                    }, 1500);
+                }, 500);
+            }
+            
+            if (messageIndex < myMessages.length) {
+                createMessage(myMessages[messageIndex]);
+                messageIndex++;
+                
+                if (messageIndex >= myMessages.length) {
+                    messageBtn.textContent = '再说一次';
+                    messageIndex = 0;
+                }
+            } else {
+                messageContainer.innerHTML = '';
+                createMessage(myMessages[messageIndex]);
+                messageIndex++;
+                messageBtn.textContent = '继续说...';
+            }
+        });
+        
+        // 创建在页面两侧显示的气泡
+        function createSideBubble() {
+            const bubble = document.createElement('div');
+            bubble.className = 'bubble';
+            bubble.textContent = loveQuotes[Math.floor(Math.random() * loveQuotes.length)];
+            bubbleContainer.appendChild(bubble);
+            
+            // 随机选择左侧或右侧显示，但避免太靠近边缘
+            const isLeft = Math.random() > 0.5;
+            // 在移动端使用更合理的定位
+            const isMobile = window.innerWidth <= 480;
+            const leftPos = isLeft ? `${Math.random() * 15 + 5}%` : isMobile ? `${Math.random() * 5 + 55}%` : `${Math.random() * 10 + 65}%`;
+            bubble.style.left = leftPos;
+            bubble.style.bottom = `${Math.random() * 30 + 10}%`;
+            
+            const duration = 8 + Math.random() * 4;
+            bubble.style.animation = `bubbleFloat ${duration}s ease-in-out forwards`;
+            
+            setTimeout(() => {
+                bubble.style.opacity = "1";
+                bubble.style.transform = "translateY(0)";
+            }, 100);
+            
+            // 气泡保留更长时间但最终仍会移除，避免页面堆积过多元素
+            setTimeout(() => {
+                if (bubble.parentNode) {
+                    bubble.style.opacity = "0";
+                    setTimeout(() => {
+                        if (bubble.parentNode) bubble.remove();
+                    }, 1000);
+                }
+            }, duration * 1000);
+        }
+
+        // 页面加载后执行
+        window.onload = function() {
+            // 创建大爱心内部的粒子
+            createBigHeartParticles();
+            // 创建漂浮的爱心粒子
+            createHeartParticles();
+            // 启动随机气泡
+            startRandomBubbles();
+            
+        };
+    </script>
+<script>
+        // 点击按钮播放音乐
+        document.getElementById('messageBtn').addEventListener('click', function() {
+            var audio = document.getElementById('backgroundMusic');
+            audio.play();
+        });
+    </script>
+    </body>
+</html>
